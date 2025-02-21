@@ -13,26 +13,18 @@ class UserController extends Controller
      */
     public function index() : JsonResponse
     {
-        $users = User::orderBy('id', 'DESC')->paginate(2);
-        return response()->json([
-            'status' => true,
-            'users' => $users,
-        ]);
+        $users = DB::table('users')->paginate(10);
+        return response()->json($users);
     }
 
     public function show($id) : JsonResponse
     {
         $user = User::find($id);
-        return response()->json([
-            'status' => true,
-            'user' => $user,
-        ]);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        return response()->json($user);
     }
-
-    /**
-     * @param UserRequest $request
-     * @return \Illuminate\Http\JsonResponse
-     */
 
     public function store(UserRequest $request) : JsonResponse
     {
