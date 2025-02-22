@@ -2,61 +2,48 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Image;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ImageController extends Controller
 {
     public function index()
     {
-        // Retorna todas as imagens
-        $images = DB::table('images')->get();
-        return response()->json($images);
+        return Image::all();
     }
 
     public function show($id)
     {
-        // Retorna uma imagem específica
-        $image = DB::table('images')->find($id);
-
-        if (!$image) {
-            return response()->json(['message' => 'Image not found'], 404);
-        }
-
-        return response()->json($image);
+        return Image::findOrFail($id);
     }
 
     public function store(Request $request)
     {
-        // Validando os dados
         $request->validate([
             'url' => 'required|url',
-            'user_id' => 'required|exists:users,id', // Valida que o usuário existe
         ]);
 
-        // Inserindo uma nova imagem
-        $imageId = DB::table('images')->insertGetId([
-            'url' => $request->url,
-            'user_id' => $request->user_id,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $image = Image::create($request->all());
 
-        $image = DB::table('images')->find($imageId);
         return response()->json($image, 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'url' => 'required|url',
+        ]);
+
+        $image = Image::findOrFail($id);
+        $image->update($request->all());
+
+        return response()->json($image, 200);
     }
 
     public function destroy($id)
     {
-        // Deletando uma imagem específica
-        $image = DB::table('images')->where('id', $id)->first();
+        Image::destroy($id);
 
-        if (!$image) {
-            return response()->json(['message' => 'Image not found'], 404);
-        }
-
-        DB::table('images')->where('id', $id)->delete();
         return response()->json(null, 204);
     }
 }
-
