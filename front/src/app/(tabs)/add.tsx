@@ -50,7 +50,7 @@ export default function AddImage() {
       formData.append('image', {
         uri,
         name: uri.split('/').pop(),
-        type: 'image/jpeg', // ou o tipo correto da imagem
+        type: 'image/jpeg',
       });
 
       const response = await axios.post("http://localhost:8000/api/images/upload", formData, {
@@ -60,7 +60,7 @@ export default function AddImage() {
       });
 
       console.log('Resposta da API:', response.data);
-      return response.data.url; // Supondo que a API retorne a URL da imagem
+      return response.data.url;
     } catch (error) {
       console.error('Erro ao fazer upload da imagem:', error);
       return null;
