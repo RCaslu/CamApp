@@ -1,173 +1,144 @@
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, Image, Alert } from "react-native";
 import React, { useState } from "react";
-import { createImage } from "@/src/api/imageApi";
+import {
+  View,
+  Text,
+  Button,
+  Image,
+  Modal,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from 'expo-file-system';
-import axios from 'axios';
 
-export default function AddImage() {
-  const [imageUrl, setImageUrl] = useState("");
+export default function UploadButton() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
-  const handleAddImage = async () => {
-    if (imageUrl) {
-      try {
-        await createImage(imageUrl);
-        setImageUrl("");
-        Alert.alert("Imagem adicionada com sucesso!");
-      } catch (error) {
-        console.error("Erro ao adicionar imagem:", error);
-        Alert.alert("Erro ao adicionar imagem");
-      }
-    }
-  };
-
-  const handleUploadImage = async (uri) => {
-    const uploadedImageUrl = await uploadImage(uri);
-    if (uploadedImageUrl) {
-      try {
-        await createImage(uploadedImageUrl);
-        setImageUrl("");
-        Alert.alert("Imagem adicionada com sucesso!");
-      } catch (error) {
-        console.error("Erro ao adicionar imagem:", error);
-        Alert.alert("Erro ao adicionar imagem");
-      }
-    } else {
-      Alert.alert("Erro ao salvar a imagem localmente");
-    }
-  };
-
-  const uploadImage = async (uri) => {
-    if (!uri) {
-      console.error('URI indefinida');
-      return null;
-    }
-  
-    console.log('URI recebida:', uri);
-  
-    try {
-      const formData = new FormData();
-      formData.append('image', {
-        uri,
-        name: uri.split('/').pop(),
-        type: 'image/jpeg',
-      });
-
-      const response = await axios.post("http://localhost:8000/api/images/upload", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('Resposta da API:', response.data);
-      return response.data.url;
-    } catch (error) {
-      console.error('Erro ao fazer upload da imagem:', error);
-      return null;
-    }
-  };
-  
   const pickImage = async () => {
+    // Solicitar permissão para acessar a galeria
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permissão para acessar a galeria é necessária!");
+      return;
+    }
+
+    // Abrir a galeria para selecionar uma imagem
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
       quality: 1,
     });
-  
-    console.log('Resultado da seleção de imagem:', result);
-  
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const localUri = result.assets[0].uri;
-      const uploadedImageUrl = await uploadImage(localUri);
-      if (uploadedImageUrl) {
-        setImageUrl(uploadedImageUrl);
-      }
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
     }
   };
-  
-  const takePhoto = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-  
-    console.log('Resultado da captura de foto:', result);
-  
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const localUri = result.assets[0].uri;
-      const uploadedImageUrl = await uploadImage(localUri);
-      if (uploadedImageUrl) {
-        setImageUrl(uploadedImageUrl);
-      }
+
+  const handleUpload = async () => {
+    if (!imageUri) return;
+
+    const formData = new FormData();
+    formData.append("image", {
+      uri: imageUri,
+      name: "upload.jpg",
+      type: "image/jpeg",
+    } as any); // Tipagem para evitar erro no TypeScript
+
+    try {
+      const response = await fetch("http://localhost:8000/api/images/upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const data = await response.json();
+      console.log("Caminho da imagem salva:", data.url);
+      setIsOpen(false); // Fechar modal após upload
+    } catch (error) {
+      console.error("Erro ao enviar imagem:", error);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Adicionar Imagem</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Insira a URL da imagem"
-        value={imageUrl}
-        onChangeText={setImageUrl}
-      />
-      {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
-      ) : null}
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.buttonText}>Escolher da Galeria</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={takePhoto}>
-        <Text style={styles.buttonText}>Tirar Foto</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => handleUploadImage(imageUrl)}>
-        <Text style={styles.buttonText}>Adicionar Imagem Local</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={handleAddImage}>
-        <Text style={styles.buttonText}>Adicionar URL</Text>
-      </TouchableOpacity>
+      {/* Botão para abrir o modal */}
+      <Button title="Upload Imagem" onPress={() => setIsOpen(true)} color="#007AFF" />
+
+      {/* Modal */}
+      <Modal visible={isOpen} transparent animationType="slide">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.title}>Upload de Imagem</Text>
+
+            {/* Botão para selecionar imagem */}
+            <Button title="Selecionar Imagem" onPress={pickImage} />
+
+            {/* Exibir imagem selecionada */}
+            {imageUri && (
+              <Image source={{ uri: imageUri }} style={styles.image} />
+            )}
+
+            {/* Botão para enviar imagem */}
+            {imageUri && (
+              <Button title="Enviar Imagem" onPress={handleUpload} color="green" />
+            )}
+
+            {/* Botão para fechar o modal */}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setIsOpen(false)}
+            >
+              <Text style={styles.closeButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: "white",
     padding: 20,
+    borderRadius: 10,
+    width: 300,
+    alignItems: "center",
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  input: {
-    width: "100%",
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    marginBottom: 10,
-    padding: 10,
-  },
-  imagePreview: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginVertical: 10,
-    width: "100%",
-  },
-  buttonText: {
-    color: "white",
     fontSize: 18,
     fontWeight: "bold",
+    marginBottom: 10,
+  },
+  image: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  closeButton: {
+    marginTop: 10,
+    backgroundColor: "red",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: "white",
+    fontSize: 16,
   },
 });
