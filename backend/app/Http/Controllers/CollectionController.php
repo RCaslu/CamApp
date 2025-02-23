@@ -9,7 +9,6 @@ class CollectionController extends Controller
 {
     public function index()
     {
-        // Retorna todas as coleções
         $collections = DB::table('collections')->get();
         return response()->json($collections);
     }

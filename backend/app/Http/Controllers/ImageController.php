@@ -46,4 +46,25 @@ class ImageController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('q');
+        $images = Image::where('url', 'LIKE', "%{$query}%")->get();
+
+        return response()->json($images, 200);
+    }
+
+    public function upload(Request $request)
+{
+    $request->validate([
+        'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    $path = $request->file('file')->store('uploads', 'public');
+
+    return response()->json([
+        'url' => asset("storage/{$path}")
+    ]);
+}
 }
