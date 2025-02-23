@@ -1,4 +1,4 @@
- import { Feather } from "@expo/vector-icons";
+ import { Feather, Octicons } from "@expo/vector-icons";
 
  export const icon = {
     index: (props: any) => (
@@ -9,5 +9,8 @@
     ),
     profile: (props: any) => (
       <Feather name="user" size={24} {...props} />
+    ),
+    add: (props: any) => (
+      <Octicons name="diff-added" size={24} {...props} />
     ),
   };
