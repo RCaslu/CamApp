@@ -2,6 +2,7 @@ import { StyleSheet, View, Text, TouchableOpacity, TextInput, Image, Alert } fro
 import React, { useState } from "react";
 import { createImage } from "@/src/api/imageApi";
 import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
 
 export default function AddImage() {
@@ -20,27 +21,52 @@ export default function AddImage() {
     }
   };
 
-  const uploadImage = async (uri) => {
-    const formData = new FormData();
-    formData.append('file', {
-      uri,
-      name: 'image.jpg',
-      type: 'image/jpeg',
-    });
+  const handleUploadImage = async (uri) => {
+    const uploadedImageUrl = await uploadImage(uri);
+    if (uploadedImageUrl) {
+      try {
+        await createImage(uploadedImageUrl);
+        setImageUrl("");
+        Alert.alert("Imagem adicionada com sucesso!");
+      } catch (error) {
+        console.error("Erro ao adicionar imagem:", error);
+        Alert.alert("Erro ao adicionar imagem");
+      }
+    } else {
+      Alert.alert("Erro ao salvar a imagem localmente");
+    }
+  };
 
+  const uploadImage = async (uri) => {
+    if (!uri) {
+      console.error('URI indefinida');
+      return null;
+    }
+  
+    console.log('URI recebida:', uri);
+  
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/upload', formData, {
+      const formData = new FormData();
+      formData.append('image', {
+        uri,
+        name: uri.split('/').pop(),
+        type: 'image/jpeg', // ou o tipo correto da imagem
+      });
+
+      const response = await axios.post("http://localhost:8000/api/images/upload", formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return response.data.url;
+
+      console.log('Resposta da API:', response.data);
+      return response.data.url; // Supondo que a API retorne a URL da imagem
     } catch (error) {
       console.error('Erro ao fazer upload da imagem:', error);
       return null;
     }
   };
-
+  
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -48,25 +74,29 @@ export default function AddImage() {
       aspect: [4, 3],
       quality: 1,
     });
-
-    if (!result.canceled) {
-      const localUri = result.uri;
+  
+    console.log('Resultado da seleção de imagem:', result);
+  
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const localUri = result.assets[0].uri;
       const uploadedImageUrl = await uploadImage(localUri);
       if (uploadedImageUrl) {
         setImageUrl(uploadedImageUrl);
       }
     }
   };
-
+  
   const takePhoto = async () => {
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-
-    if (!result.canceled) {
-      const localUri = result.uri;
+  
+    console.log('Resultado da captura de foto:', result);
+  
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const localUri = result.assets[0].uri;
       const uploadedImageUrl = await uploadImage(localUri);
       if (uploadedImageUrl) {
         setImageUrl(uploadedImageUrl);
@@ -92,8 +122,11 @@ export default function AddImage() {
       <TouchableOpacity style={styles.button} onPress={takePhoto}>
         <Text style={styles.buttonText}>Tirar Foto</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={() => handleUploadImage(imageUrl)}>
+        <Text style={styles.buttonText}>Adicionar Imagem Local</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleAddImage}>
-        <Text style={styles.buttonText}>Adicionar</Text>
+        <Text style={styles.buttonText}>Adicionar URL</Text>
       </TouchableOpacity>
     </View>
   );

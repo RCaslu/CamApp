@@ -58,13 +58,18 @@ class ImageController extends Controller
     public function upload(Request $request)
 {
     $request->validate([
-        'file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
 
-    $path = $request->file('file')->store('uploads', 'public');
+    // Salvar a imagem na pasta storage/app/public/uploads
+    $path = $request->file('image')->store('uploads', 'public');
 
-    return response()->json([
-        'url' => asset("storage/{$path}")
+    // Criar um registro no banco de dados
+    $image = Image::create([
+        'url' => asset("storage/{$path}"), // Gera a URL pública
     ]);
+
+    return response()->json($image, 201);
 }
+
 }
