@@ -61,12 +61,10 @@ class ImageController extends Controller
         'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
 
-    // Salvar a imagem na pasta storage/app/public/uploads
     $path = $request->file('image')->store('uploads', 'public');
 
-    // Criar um registro no banco de dados
     $image = Image::create([
-        'url' => asset("storage/{$path}"), // Gera a URL pública
+        'url' => asset("storage/{$path}"),
     ]);
 
     return response()->json($image, 201);
