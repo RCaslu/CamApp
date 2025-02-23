@@ -22,7 +22,6 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    // This will run every time images state changes
     fetchImages();
   }, [images]);
 
