@@ -15,14 +15,12 @@ export default function UploadButton() {
   const [imageUri, setImageUri] = useState<string | null>(null);
 
   const pickImage = async () => {
-    // Solicitar permissão para acessar a galeria
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Permissão para acessar a galeria é necessária!");
       return;
     }
 
-    // Abrir a galeria para selecionar uma imagem
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -42,7 +40,7 @@ export default function UploadButton() {
       uri: imageUri,
       name: "upload.jpg",
       type: "image/jpeg",
-    } as any); // Tipagem para evitar erro no TypeScript
+    } as any); 
 
     try {
       const response = await fetch("http://localhost:8000/api/images/upload", {
@@ -55,7 +53,7 @@ export default function UploadButton() {
 
       const data = await response.json();
       console.log("Caminho da imagem salva:", data.url);
-      setIsOpen(false); // Fechar modal após upload
+      setIsOpen(false); 
     } catch (error) {
       console.error("Erro ao enviar imagem:", error);
     }
@@ -63,29 +61,26 @@ export default function UploadButton() {
 
   return (
     <View style={styles.container}>
-      {/* Botão para abrir o modal */}
       <Button title="Upload Imagem" onPress={() => setIsOpen(true)} color="#007AFF" />
-
-      {/* Modal */}
       <Modal visible={isOpen} transparent animationType="slide">
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
             <Text style={styles.title}>Upload de Imagem</Text>
 
-            {/* Botão para selecionar imagem */}
+            
             <Button title="Selecionar Imagem" onPress={pickImage} />
 
-            {/* Exibir imagem selecionada */}
+            
             {imageUri && (
               <Image source={{ uri: imageUri }} style={styles.image} />
             )}
 
-            {/* Botão para enviar imagem */}
+            
             {imageUri && (
               <Button title="Enviar Imagem" onPress={handleUpload} color="green" />
             )}
 
-            {/* Botão para fechar o modal */}
+            
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setIsOpen(false)}
@@ -99,7 +94,7 @@ export default function UploadButton() {
   );
 }
 
-// Estilos
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
