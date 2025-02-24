@@ -91,7 +91,7 @@ export default function Page() {
         data={images}
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
-        showsVerticalScrollIndicator={false} // Ocultar a barra de rolagem vertical
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => openImageModal(item.url)}>
             <View style={styles.imageContainer}>
