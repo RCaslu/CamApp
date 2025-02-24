@@ -15,7 +15,7 @@ class CollectionController extends Controller
 
     public function show($id)
     {
-        // Retorna uma coleção específica
+            
         $collection = DB::table('collections')->find($id);
 
         if (!$collection) {
@@ -27,13 +27,13 @@ class CollectionController extends Controller
 
     public function store(Request $request)
     {
-        // Validando os dados
+        
         $request->validate([
             'name' => 'required',
-            'user_id' => 'required|exists:users,id', // Valida que o usuário existe
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        // Inserindo uma nova coleção
+        
         $collectionId = DB::table('collections')->insertGetId([
             'name' => $request->name,
             'user_id' => $request->user_id,
@@ -47,7 +47,7 @@ class CollectionController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Atualizando uma coleção específica
+        
         $collection = DB::table('collections')->where('id', $id)->first();
 
         if (!$collection) {
@@ -66,7 +66,7 @@ class CollectionController extends Controller
 
     public function destroy($id)
     {
-        // Deletando uma coleção específica
+        
         $collection = DB::table('collections')->where('id', $id)->first();
 
         if (!$collection) {
